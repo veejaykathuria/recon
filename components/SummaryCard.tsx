@@ -12,6 +12,7 @@ export type AnalyzeResult = {
   counts: { files: number; functions: number; calls: number; subsystems: number };
   subsystems: Subsystem[];
   dataflow_ascii?: string;
+  dataflow_narrative?: string;
   truncated: boolean;
 };
 

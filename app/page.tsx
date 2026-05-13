@@ -88,8 +88,11 @@ export default function Page() {
           </section>
 
           <section className="section">
-            <h2>4. Dataflow (ASCII)</h2>
-            <DataflowAscii ascii={result.dataflow_ascii ?? ''} />
+            <h2>4. Dataflow (ASCII + narrative)</h2>
+            <DataflowAscii
+              ascii={result.dataflow_ascii ?? ''}
+              narrative={result.dataflow_narrative}
+            />
           </section>
 
           <section className="section">
