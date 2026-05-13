@@ -3,34 +3,15 @@
 // Steps: clone -> parse -> cluster (Kimchi) -> push to Neo4j -> return counts/subsystems.
 
 import { NextRequest, NextResponse } from "next/server";
-import { execFile } from "node:child_process";
-import path from "node:path";
-import { promisify } from "node:util";
 import { clusterFunctions, type Subsystem } from "@/lib/cluster";
 import { pushToNeo4j, type ParsedRepo } from "@/lib/graph";
 import { KimchiAuthError, KimchiFormatError, KimchiConfigError } from "@/lib/kimchi";
+import { cloneRepo } from "@/lib/clone";
+import { parsePythonRepo } from "@/lib/parse_python";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
-
-const execFileP = promisify(execFile);
-const PY = process.env.PYTHON_BIN || (process.platform === "win32" ? "python" : "python3");
-
-function repoRoot(): string {
-  // app/api/analyze/route.ts -> ../../../..
-  return path.resolve(process.cwd());
-}
-
-async function runPython(script: string, args: string[]): Promise<string> {
-  const scriptPath = path.join(repoRoot(), "tools", script);
-  const { stdout } = await execFileP(PY, [scriptPath, ...args], {
-    maxBuffer: 64 * 1024 * 1024, // 64MB
-    cwd: repoRoot(),
-    windowsHide: true,
-  });
-  return stdout;
-}
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -44,22 +25,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_repo_url" }, { status: 400 });
   }
 
-  // 1. Clone
+  // 1. Clone (pure TS — works on Vercel; git CLI is available in functions)
   let clonePath: string;
   let cloneName: string;
   let cloneSha: string;
   try {
-    const stdout = await runPython("clone_repo.py", [repo_url]);
-    const result = JSON.parse(stdout.trim());
-    if (result?.error) {
-      return NextResponse.json(
-        { error: "clone_failed", message: result.message || result.error },
-        { status: 400 }
-      );
-    }
+    const result = await cloneRepo(repo_url);
     clonePath = result.path;
     cloneName = result.name;
-    cloneSha = result.sha || "";
+    cloneSha = result.sha;
   } catch (err: any) {
     return NextResponse.json(
       { error: "clone_failed", message: err?.message || String(err) },
@@ -67,11 +41,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse
+  // 2. Parse (pure TS — regex-based Python extractor, no python3 dependency)
   let parsed: ParsedRepo;
   try {
-    const stdout = await runPython("parse_python.py", [clonePath, repo_url]);
-    parsed = JSON.parse(stdout);
+    parsed = parsePythonRepo(clonePath, {
+      repoUrl: repo_url,
+      repoName: cloneName,
+      repoSha: cloneSha,
+    });
   } catch (err: any) {
     return NextResponse.json(
       { error: "parse_failed", message: err?.message || String(err) },
