@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import RepoInput from '../components/RepoInput';
 import SummaryCard, { AnalyzeResult } from '../components/SummaryCard';
 import Chat from '../components/Chat';
+import DataflowAscii from '../components/DataflowAscii';
 import { apiUrl } from '../lib/api-base';
 
 // vis-network touches window/document — load client-only.
@@ -87,7 +88,12 @@ export default function Page() {
           </section>
 
           <section className="section">
-            <h2>4. Ask the graph</h2>
+            <h2>4. Dataflow (ASCII)</h2>
+            <DataflowAscii ascii={result.dataflow_ascii ?? ''} />
+          </section>
+
+          <section className="section">
+            <h2>5. Ask the graph</h2>
             <Chat repoUrl={result.repo.url} />
           </section>
         </>
@@ -95,7 +101,7 @@ export default function Page() {
 
       {!result && (
         <section className="section">
-          <h2>4. Ask the graph</h2>
+          <h2>5. Ask the graph</h2>
           <Chat />
         </section>
       )}

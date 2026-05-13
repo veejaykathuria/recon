@@ -11,6 +11,7 @@ export type AnalyzeResult = {
   repo: { url: string; name: string; sha: string };
   counts: { files: number; functions: number; calls: number; subsystems: number };
   subsystems: Subsystem[];
+  dataflow_ascii?: string;
   truncated: boolean;
 };
 

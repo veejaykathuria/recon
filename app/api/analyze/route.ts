@@ -8,6 +8,7 @@ import { pushToNeo4j, type ParsedRepo } from "@/lib/graph";
 import { KimchiAuthError, KimchiFormatError, KimchiConfigError } from "@/lib/kimchi";
 import { cloneRepo } from "@/lib/clone";
 import { parsePythonRepo } from "@/lib/parse_python";
+import { renderDataflowAscii } from "@/lib/dataflow";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -146,11 +147,20 @@ export async function POST(req: NextRequest) {
     description: s.description,
   }));
 
+  // 5. ASCII dataflow (best-effort — never fails the response)
+  let dataflow_ascii = "";
+  try {
+    dataflow_ascii = await renderDataflowAscii(repo_url, subsystemsOut);
+  } catch (err) {
+    logErr(reqId, "dataflow", err);
+  }
+
   console.log(`[analyze][${reqId}] done total=${Date.now() - t0}ms`);
   return NextResponse.json({
     repo: parsed.repo,
     counts,
     subsystems: subsystemsOut,
+    dataflow_ascii,
     truncated: !!parsed.truncated,
   });
 }
