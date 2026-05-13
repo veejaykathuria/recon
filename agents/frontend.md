@@ -35,3 +35,8 @@ description: Owns Next.js App Router pages, React components, viz, and chat UI. 
 
 ## When to escalate
 - Graph too big to render (>2000 nodes) → backend agent should add server-side downsampling (top-N most-called functions per subsystem).
+
+## Skills this agent should consult
+- `.agents/skills/frontend-design/SKILL.md` — design tokens, layout heuristics, and "don't make it look AI-generated" guidance. Use when iterating on `app/page.tsx` and components.
+- `.agents/skills/vercel-react-native-skills/SKILL.md` — Vercel deploy ergonomics (env vars, `runtime`, edge vs node) that also apply to our Next.js (non-RN) app.
+- `.agents/skills/brainstorming/SKILL.md` — when proposing UI changes or new viz modes, use to draft 2-3 alternatives before committing to one.

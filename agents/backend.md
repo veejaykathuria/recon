@@ -43,3 +43,9 @@ Build and own everything server-side for Recon:
 - Repo too large after the caps → return partial result with a `truncated: true` flag, do not error.
 - Neo4j Aura paused → return `{ error: "neo4j_paused", hint: "resume instance" }`.
 - Kimchi 401 → return `{ error: "kimchi_auth", hint: "check KIMCHI_API_KEY" }`.
+
+## Skills this agent should consult
+- `.tessl/skills/recon-schema/SKILL.md` — graph schema + Cypher rules. Loaded into `/api/ask` system prompt at runtime.
+- `.agents/skills/github-actions-docs/SKILL.md` — when wiring CI for the API routes / Python tools (build matrix, secret handling).
+- `.agents/skills/skill-creator/SKILL.md` — when authoring or revising any new local skill (e.g. iterating on `recon-schema`).
+- Neo4j Cypher skill (when installed via `tessl install github:neo4j-contrib/neo4j-skills`) — covers modern Cypher 25 syntax for any new query patterns you write into `lib/graph.ts` or `/api/ask`.
