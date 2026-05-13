@@ -318,3 +318,56 @@ textarea:focus {
   margin-left: auto;
   text-align: right;
 }
+
+.explainer {
+  margin-top: 56px;
+  padding: 24px 0 12px 0;
+  border-top: 1px solid #21262d;
+  color: #b1bac4;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 780px;
+}
+
+.explainer h2 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #e6edf3;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.explainer h3 {
+  margin: 24px 0 6px 0;
+  font-size: 13px;
+  color: #e6edf3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.explainer p {
+  margin: 0 0 12px 0;
+}
+
+.explainer ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+}
+
+.explainer li {
+  margin-bottom: 6px;
+}
+
+.explainer code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 12.5px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.explainer strong {
+  color: #e6edf3;
+}
