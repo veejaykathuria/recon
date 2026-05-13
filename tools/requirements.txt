@@ -1,0 +1,3 @@
+# Recon tools use only Python stdlib (ast, subprocess, json, pathlib, socket, urllib).
+# Optional: neo4j driver for richer check_env probing.
+neo4j>=5.0.0
