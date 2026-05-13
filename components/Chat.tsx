@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiUrl } from '../lib/api-base';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -30,7 +31,7 @@ export default function Chat({ repoUrl }: Props) {
     setSending(true);
 
     try {
-      const res = await fetch('/api/ask', {
+      const res = await fetch(apiUrl('/api/ask'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: q, repo_url: repoUrl }),

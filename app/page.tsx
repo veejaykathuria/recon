@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import RepoInput from '../components/RepoInput';
 import SummaryCard, { AnalyzeResult } from '../components/SummaryCard';
 import Chat from '../components/Chat';
+import { apiUrl } from '../lib/api-base';
 
 // vis-network touches window/document — load client-only.
 const GraphView = dynamic(() => import('../components/GraphView'), {
@@ -27,7 +28,7 @@ export default function Page() {
     setAnalyzing(true);
     setError(null);
     try {
-      const res = await fetch('/api/analyze', {
+      const res = await fetch(apiUrl('/api/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_url: repoUrl }),
