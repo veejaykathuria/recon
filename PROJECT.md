@@ -243,12 +243,27 @@ Every sponsor's tool is load-bearing in both flows. None is bolted on.
 
 ## Live deployment
 
-- **URL:** https://recon-2s968tfta-veejay-kathurias-projects.vercel.app
+- **URL:** https://recon-cehyyqi83-veejay-kathurias-projects.vercel.app
 - **Project:** `veejay-kathurias-projects/recon` on Vercel
 - **Env vars on Vercel (production):** `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `KIMCHI_BASE_URL`, `KIMCHI_API_KEY`, `KIMCHI_MODEL=kimi-k2.5`, `KIMCHI_CLUSTER_MODEL=nemotron-3-super-fp4`
-- **Note:** Vercel defaults new projects to "Deployment Protection: SSO." Disable it for the demo at:
-  https://vercel.com/veejay-kathurias-projects/recon/settings/deployment-protection
-  (Set "Vercel Authentication" → "Only Preview Deployments" so production is public.)
+
+### Two things you (the human) need to do before judging
+
+1. **Disable deployment protection** so judges can hit the URL without your Vercel login. Settings → Deployment Protection → "Vercel Authentication" → Disabled (or "Only Preview Deployments"):
+   https://vercel.com/veejay-kathurias-projects/recon/settings/deployment-protection
+2. **(Hobby-plan-only)** Raise max function duration to 60s in Project Settings → Functions, or accept that the analyze step may time out on the cluster call for any repo with hundreds of functions. The 2nd commit's TS port (`lib/clone.ts`, `lib/parse_python.ts`) removed the Python dependency that previously caused `spawn python3 ENOENT` on Vercel. Local pipeline is unaffected (still uses `tools/*.py` for max fidelity).
+
+### Where things run
+
+| Code path | localhost (proven) | Vercel (deployed) |
+|---|---|---|
+| `/` page, frontend components | ✅ | ✅ |
+| `/api/analyze` clone (simple-git) | ✅ via lib/clone.ts | ✅ via lib/clone.ts |
+| `/api/analyze` Python AST parse | ✅ tools/parse_python.py (fidelity) | ✅ lib/parse_python.ts (heuristic regex) |
+| `/api/analyze` Kimchi clustering | ✅ | ✅ (same model: nemotron-3-super-fp4) |
+| `/api/analyze` Neo4j write | ✅ | ✅ (same Aura instance) |
+| `/api/ask` Kimchi cypher + answer | ✅ | ✅ (same model: kimi-k2.5) |
+| `/api/ask` Cypher injection guard | ✅ | ✅ |
 
 ## Local smoke baseline (T-30 min)
 
