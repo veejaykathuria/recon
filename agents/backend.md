@@ -39,6 +39,14 @@ Build and own everything server-side for Recon:
 - When a tool or API route is ready, leave a one-line note in the relevant workflow file under "## Status" and ping the QA agent by adding an entry to `.tmp/qa_queue.md`.
 - Frontend agent will request response shapes — keep contracts above stable; if you must change them, update this file *first* and tell frontend.
 
+## Sub-agent spawning
+You MAY spawn sub-agents for parallel work — e.g. one sub-agent for
+`tools/parse_python.py`, another for `lib/graph.ts`, a third for the API
+routes — provided their file ownership doesn't overlap. Each sub-agent
+gets a self-contained brief and posts to `.tmp/qa_queue.md` on completion.
+You are responsible for verifying their output before signaling QA. See
+[agents/README.md](README.md#sub-agent-spawning-agent-teams).
+
 ## When to escalate
 - Repo too large after the caps → return partial result with a `truncated: true` flag, do not error.
 - Neo4j Aura paused → return `{ error: "neo4j_paused", hint: "resume instance" }`.

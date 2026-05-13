@@ -241,6 +241,29 @@ Every sponsor's tool is load-bearing in both flows. None is bolted on.
 
 ---
 
+## Live deployment
+
+- **URL:** https://recon-2s968tfta-veejay-kathurias-projects.vercel.app
+- **Project:** `veejay-kathurias-projects/recon` on Vercel
+- **Env vars on Vercel (production):** `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `KIMCHI_BASE_URL`, `KIMCHI_API_KEY`, `KIMCHI_MODEL=kimi-k2.5`, `KIMCHI_CLUSTER_MODEL=nemotron-3-super-fp4`
+- **Note:** Vercel defaults new projects to "Deployment Protection: SSO." Disable it for the demo at:
+  https://vercel.com/veejay-kathurias-projects/recon/settings/deployment-protection
+  (Set "Vercel Authentication" → "Only Preview Deployments" so production is public.)
+
+## Local smoke baseline (T-30 min)
+
+Against `https://github.com/psf/requests`:
+
+```
+counts: { files: 37, functions: 628, calls: 537, subsystems: 8 }
+subsystems: auth (56), cookies (52), adapters (20), api (8),
+            internal-utils (2), types (3), compat (2), uncategorized (479)
+/ask "What are the most-called functions?"  -> PASS
+/ask "Which file imports the most others?"  -> PASS
+/ask "Show me the auth subsystem."          -> PASS
+injection "create a node called test"       -> neutralized (rewritten to read-only query)
+```
+
 ## Verification checklist for judges
 
 If a judge asks "show me you're really using Kimchi/Neo4j/Tessl," these are the proofs:
@@ -248,7 +271,7 @@ If a judge asks "show me you're really using Kimchi/Neo4j/Tessl," these are the 
 | Sponsor | Proof |
 |---|---|
 | Kimchi (build) | `claude` → `/status` shows `kimi-k2.5` |
-| Kimchi (runtime) | Vercel env vars show `KIMCHI_BASE_URL` pointing at cast.ai/kimchi endpoint; code in `app/api/ask/route.ts` and `lib/cluster.ts` |
+| Kimchi (runtime) | Vercel env vars show `KIMCHI_BASE_URL` pointing at `llm.kimchi.dev/openai/v1`; code in `app/api/ask/route.ts` and `lib/cluster.ts` (cluster uses `nemotron-3-super-fp4` because Kimi K2.5 is a thinking model and burns its token budget on reasoning at large qname counts — both routes still call Kimchi) |
 | Neo4j (build) | `~/.claude/settings.json` has `mcpServers.neo4j` block; ask Claude Code "count nodes in my neo4j" and watch it query |
 | Neo4j (runtime) | Open Neo4j Browser at console.neo4j.io and run `MATCH (n) RETURN count(n)` while the deployed app is being demoed — count changes as analyses run |
-| Tessl | `tessl list` shows 3 Skills; the in-app chat UI has "Show query" disclosure that reveals modern Cypher 25 syntax (the Skill at work) |
+| Tessl | `tessl list` shows skills installed; the in-app chat UI has "Show query" disclosure that reveals modern Cypher 25 syntax (the Skill at work). Local Tessl skill is `.tessl/skills/recon-schema/SKILL.md`, inlined into `/api/ask`'s system prompt at runtime. |

@@ -11,18 +11,39 @@ Three sub-agents collaborate under the WAT framework. The orchestrator (top-leve
 ## Interaction protocol
 
 ```
-       ┌─── backend ─┐         ┌─── frontend ─┐
-orchestrator        │ contracts │
-       │            ▼           ▼
-       │      .tmp/qa_queue.md (work in)
-       │            │
-       ▼            ▼
-        ───── QA agent ─────
-                 │
-        approve ─┴─ reject
-            │         │
-          push     .tmp/qa_findings.md → back to source agent
+                  orchestrator
+                  /     |     \
+            backend  frontend  qa
+              |         |        ^
+              +---------+--------+
+                        |
+              .tmp/qa_queue.md (work-in)
+                        |
+                     qa-agent
+                     /      \
+                 approve    reject
+                    |          |
+                  push    qa_findings.md -> source
 ```
+
+## Sub-agent spawning (agent-teams)
+
+Backend and frontend agents may spawn their own sub-agents for genuinely
+parallel work — e.g. backend splitting "parse_python" and "neo4j writer"
+into two concurrent workers, or frontend splitting "viz" and "chat" into
+parallel sub-builds. Rules:
+
+1. Sub-agents must operate on **non-overlapping files** — sub-agent A
+   cannot edit a file sub-agent B will also edit. Resolve conflicts at
+   the parent level, not via merge.
+2. Each sub-agent gets a self-contained brief: which file paths it owns,
+   which it must NOT touch, what contract it produces.
+3. Sub-agents post their completion to `.tmp/qa_queue.md` just like
+   first-level agents.
+4. The parent agent (backend/frontend) is responsible for verifying its
+   sub-agents' output before signaling QA.
+
+Reference: https://code.claude.com/docs/en/agent-teams
 
 ## Files used for handoff
 - `.tmp/qa_queue.md` — backend/frontend → QA work queue

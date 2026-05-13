@@ -33,6 +33,14 @@ description: Owns Next.js App Router pages, React components, viz, and chat UI. 
 - When a page or component is ready, ping QA via `.tmp/qa_queue.md`.
 - If a backend contract is missing what you need, append your request to `.tmp/contract_requests.md` and continue with a stub.
 
+## Sub-agent spawning
+You MAY spawn sub-agents for parallel work — e.g. one for the graph viz
+(`components/GraphView.tsx`), another for chat (`components/Chat.tsx`),
+another for the page shell — provided their file ownership doesn't
+overlap. Each sub-agent gets a self-contained brief and posts to
+`.tmp/qa_queue.md` on completion. You are responsible for verifying
+their output before signaling QA. See [agents/README.md](README.md#sub-agent-spawning-agent-teams).
+
 ## When to escalate
 - Graph too big to render (>2000 nodes) → backend agent should add server-side downsampling (top-N most-called functions per subsystem).
 
