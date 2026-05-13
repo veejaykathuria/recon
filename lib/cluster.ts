@@ -31,26 +31,51 @@ export async function clusterFunctions(qnames: string[]): Promise<Subsystem[]> {
   // Cap to keep prompt size sane; Kimi 262k window can easily hold this but no need to send giant lists.
   const capped = qnames.slice(0, 5000);
 
-  const user = JSON.stringify({ qnames: capped });
+  // Send only file-path prefixes / short basenames as *hints* and ask the
+  // model to return *patterns* (substrings that select qnames). This keeps
+  // the model's JSON output tiny regardless of qname count — solves the
+  // thinking-model token-budget truncation we saw at 628 qnames.
+  const sample = capped.slice(0, Math.min(capped.length, 80));
+  const user = JSON.stringify({
+    total_qnames: capped.length,
+    sample_qnames: sample,
+  });
+
+  const PATTERN_SYSTEM =
+    `You are a senior software architect. Given a sample of Python function qnames ` +
+    `(format "module.path:fn_name"), define 3-7 subsystems that cover the codebase. ` +
+    `For each subsystem, return one or more match patterns: substrings that appear in ` +
+    `qnames belonging to that subsystem (e.g. "auth", "models", ".sessions:", "utils").\n\n` +
+    `Return STRICT JSON ONLY (no prose, no fences):\n` +
+    `{"subsystems":[{"name":string,"description":string,"color":"#rrggbb","patterns":[string]}]}\n\n` +
+    `Rules:\n` +
+    `- name: short, kebab/lower-case (auth, http-client, data-models, utils, tests).\n` +
+    `- description: 1 sentence, <= 120 chars.\n` +
+    `- color: 7-char hex, visually distinct per subsystem.\n` +
+    `- patterns: case-insensitive substrings (3+ chars). Choose ones that uniquely ` +
+    `select members of this subsystem. Order subsystems most-specific first.`;
+
+  const modelOverride = process.env.KIMCHI_CLUSTER_MODEL || undefined;
 
   let result: any;
   try {
     result = await chat({
-      system: SYSTEM_PROMPT,
+      system: PATTERN_SYSTEM,
       user,
       json: true,
       temperature: 0.2,
-      maxTokens: 12000,
+      maxTokens: 2048,
+      model: modelOverride,
     });
   } catch (err) {
     if (err instanceof KimchiFormatError) {
-      // Retry once with stricter framing
       result = await chat({
-        system: SYSTEM_PROMPT + "\n\nReturn ONLY a JSON object. Do not include any other text.",
+        system: PATTERN_SYSTEM + "\n\nReturn ONLY a JSON object. Do not include any other text.",
         user,
         json: true,
         temperature: 0,
-        maxTokens: 12000,
+        maxTokens: 2048,
+        model: modelOverride,
       });
     } else {
       throw err;
@@ -61,8 +86,8 @@ export async function clusterFunctions(qnames: string[]): Promise<Subsystem[]> {
     ? (result as any).subsystems
     : Array.isArray(result) ? result : [];
 
+  // Apply patterns to *all* qnames locally. No further LLM calls.
   const seen = new Set<string>();
-  const valid = new Set<string>(capped);
   const out: Subsystem[] = [];
 
   for (const s of raw) {
@@ -70,20 +95,26 @@ export async function clusterFunctions(qnames: string[]): Promise<Subsystem[]> {
     const name = String(s.name || "").trim();
     const description = String(s.description || "").trim();
     const color = normalizeColor(s.color);
-    const list: string[] = Array.isArray(s.qnames) ? s.qnames.filter((q: any) => typeof q === "string") : [];
-    const filtered: string[] = [];
-    for (const q of list) {
-      if (valid.has(q) && !seen.has(q)) {
+    const patterns: string[] = Array.isArray(s.patterns)
+      ? s.patterns.filter((p: any) => typeof p === "string" && p.length >= 2)
+      : [];
+    if (!name || patterns.length === 0) continue;
+
+    const lowered = patterns.map((p) => p.toLowerCase());
+    const matched: string[] = [];
+    for (const q of capped) {
+      if (seen.has(q)) continue;
+      const ql = q.toLowerCase();
+      if (lowered.some((p) => ql.includes(p))) {
         seen.add(q);
-        filtered.push(q);
+        matched.push(q);
       }
     }
-    if (name && filtered.length > 0) {
-      out.push({ name, description, color, qnames: filtered });
+    if (matched.length > 0) {
+      out.push({ name, description, color, qnames: matched });
     }
   }
 
-  // Any leftover qnames -> bucket into "uncategorized"
   const leftovers = capped.filter((q) => !seen.has(q));
   if (leftovers.length > 0) {
     out.push({

@@ -48,6 +48,7 @@ export interface ChatOptions {
   json?: boolean;
   temperature?: number;
   maxTokens?: number;
+  model?: string;
 }
 
 /**
@@ -57,7 +58,7 @@ export interface ChatOptions {
  */
 export async function chat(opts: ChatOptions): Promise<string | Record<string, any>> {
   const client = getClient();
-  const model = process.env.KIMCHI_MODEL || "kimi-k2.5";
+  const model = opts.model || process.env.KIMCHI_MODEL || "kimi-k2.5";
 
   let response;
   try {
